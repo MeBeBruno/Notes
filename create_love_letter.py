@@ -21,7 +21,7 @@ def main():
 	message = encrypt(input("> "), PASSWORT)
 	now = datetime.now()
 	
-	with open(f"snb-{now.day}-{now.month}-{now.year}.html") as file:
+	with open(f"snb-{now.day}-{now.month}-{now.year}.html", "w+", encoding="utf-8") as file:
 		file.write(html_1 + message + html_2)
 
 if __name__ == "__main__":
