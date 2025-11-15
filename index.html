@@ -1,9 +1,9 @@
 <script>
-	addEventListener("DOMContentLoaded", (event) => {
-		now = Date.now();
-		const formattedDate = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
-		file_name = "snb-" + formattedDate + ".html"
-		window.location.replace(file_name)
-		document.getElementsByTagName("body").innerHTML = "<a href=\"" + file_name + "\">Klicke hier, wenn du nicht weitergeleitet wirst!</a>"
-	})
+addEventListener("DOMContentLoaded", () => {
+	const today = new Date();
+	const formatted = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+	const file_name = "snb-" + formatted + ".html";
+	window.location.replace(file_name);
+	document.body.innerHTML = `<a href="${file_name}">Klicke hier, wenn du nicht weitergeleitet wirst!</a>`;
+});
 </script>
