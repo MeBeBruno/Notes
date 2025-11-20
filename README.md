@@ -1,1 +1,1 @@
-&rarr; [Live Page](mebebruno.github.io/Notes)
+&rarr; [Live Page](https://mebebruno.github.io/Notes/)
