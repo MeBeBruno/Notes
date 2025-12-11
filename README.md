@@ -1,4 +1,4 @@
-# Notes
+# Notes&#x24B7;
 
 > A little collection of love notes bundled and packed together with an automatic index page 💌
 
