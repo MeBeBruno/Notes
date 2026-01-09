@@ -1,28 +1,48 @@
-from base64 import b64encode, b64decode
+import os
+import json
+import base64
 from datetime import datetime
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
 
-def encrypt(message: str, password: str) -> str:
-	encoded_message = message.encode() # Encode as bytes
-	encoded_password = password.encode()
-	encrypted = bytes([encoded_message[i] ^ encoded_password[i % len(encoded_password)] for i in range(len(encoded_message))])
-	return b64encode(encrypted).decode()
-
-def decrypt(encryptedb64: str, password: str) -> str:
-	encrypted = b64decode(encryptedb64)
-	encoded_password = password.encode()
-	decrypted = bytes([encrypted[i] ^ encoded_password[i % len(encoded_password)] for i in range(len(encrypted))])
-	return decrypted.decode()
+def encrypt_message(message: str, password: str) -> str:
+	salt = os.urandom(16)
+	kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
+	key = kdf.derive(password.encode('utf-8'))
+	aesgcm = AESGCM(key)
+	nonce = os.urandom(12)
+	ciphertext = aesgcm.encrypt(nonce, message.encode('utf-8'), None)
+	return json.dumps({
+		"salt": base64.b64encode(salt).decode('utf-8'),
+		"iv": base64.b64encode(nonce).decode('utf-8'),
+		"data": base64.b64encode(ciphertext).decode('utf-8')
+	})
 
 def main():
-	html_1 = "<!doctype html><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Eine kleine Notiz…</title><link rel=\"shortcut icon\" href=\"https://em-content.zobj.net/source/apple/419/love-letter_1f48c.png\" type=\"image/png\"><style>*{margin:0;padding:0;box-sizing:border-box;font-family:\"BrunoByHand\";}html,body{height:100%;display:flex;align-items:center;justify-content:center;background-color:oklch(100% 0.25 10);}@font-face{font-family:\"BrunoByHand\";src:url(fonts/brunobyhand.otf);}footer{position:absolute;bottom:5vh;text-align:center;}.crumpled{width:min(20vw,20vh);}.unfolded{display:none;width:min(80vw,80vh);height:min(80vw,80vh);}.unfolded.text{position:absolute;z-index:1;padding:min(20vw,20vh) min(8vw,8vh) min(27vw,27vh) min(5vw,5vh);}.unfolded.text p{color:oklch(30% 0.35 0);text-align:center;align-content:center;word-break:break-word;overflow:hidden;font-size:min(5vw,5vh);;height:100%;}.rotate{animation:rotate 5s ease infinite;}@keyframes rotate{0%,9%{transform:rotate(0deg);}11%,19%{transform:rotate(36deg);}21%,29%{transform:rotate(72deg);}31%,39%{transform:rotate(108deg);}41%,49%{transform:rotate(144deg);}51%,59%{transform:rotate(180deg);}61%,69%{transform:rotate(216deg);}71%,79%{transform:rotate(252deg);}81%,89%{transform:rotate(288deg);}91%,99%{transform:rotate(324deg);}100%{transform:rotate(342deg);}}</style></head><body><img class=\"crumpled rotate\" src=\"images/crumbled-up.png\" alt=\"Crumpled paper\"><div class=\"unfolded text\"><p>Dieser Text ist nicht der, der er sein sollte…</p></div><img class=\"unfolded\" src=\"images/unfolded.png\" alt=\"Unfolded paper\"><footer>&copy; 2025 · Mit ❤️ von Bruno für Samma</footer><script>const crumpled=document.querySelector(\".crumpled\");const unfolded=document.querySelectorAll(\".unfolded\");const noteText=document.querySelector(\".unfolded.text p\");const encrypted=\""
-	html_2 = "\";const base64ToUtf8=b64=>new TextDecoder().decode(Uint8Array.from(atob(b64),c=>c.charCodeAt(0)));document.addEventListener(\"DOMContentLoaded\",()=>{const pw=prompt(\"Einmal bitte das geheime Wort, das kleiner als 3 ist 😝\");const ascii=base64ToUtf8(encrypted);let out=\"\";for(let i=0;i<ascii.length;i++){out+=String.fromCharCode(ascii.charCodeAt(i)^pw.charCodeAt(i%pw.length));}noteText.textContent=out;});crumpled.addEventListener(\"click\",()=>{crumpled.style.display=\"none\";unfolded.forEach(el=>el.style.display=\"block\");});</script></body></html>"
-
 	PASSWORT = "samma"
-	message = encrypt(input("> "), PASSWORT)
-	now = datetime.now()
+	EMOJI_MAPPING = {
+		"😝": "images/emojis/sammiley.png",
+	}
+
+	print(f"Verschlüssle Nachricht für Passwort: '{PASSWORT}'")
+	user_input = input("Deine Nachricht > ")
 	
-	with open(f"snb-{now.day}-{now.month}-{now.year}.html", "w+", encoding="utf-8") as file:
-		file.write(html_1 + message + html_2)
+	# Nachricht verschlüsseln
+	encrypted_json = encrypt_message(user_input, PASSWORT)
+	mapping_json = json.dumps(EMOJI_MAPPING)
+
+	now = datetime.now()
+
+	html_template = "<!doctype html><html lang=\"de\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Eine kleine Notiz…</title><link rel=\"shortcut icon\" href=\"https://em-content.zobj.net/source/apple/419/love-letter_1f48c.png\" type=\"image/png\"><style>*{margin:0;padding:0;box-sizing:border-box;font-family:\"BrunoByHand\",sans-serif;}html,body{height:100%;width:100%;display:flex;align-items:center;justify-content:center;background-color:oklch(100% 0.25 10);overflow:hidden;}@font-face{font-family:\"BrunoByHand\";src:url(fonts/brunobyhand.otf);}footer{position:absolute;bottom:5vh;text-align:center;width:100%;pointer-events:none;z-index:10;}.paper-wrapper{position:relative;width:min(80vw,80vh);height:min(80vw,80vh);display:none;}.crumpled{width:min(20vw,20vh);cursor:pointer;transition:transform 0.3s;}.crumpled:hover{transform:scale(1.1) rotate(10deg);}.unfolded{width:100%;height:100%;display:block;}.unfolded.text{position:absolute;top:0;left:0;width:100%;height:100%;padding:min(20vw,20vh) min(8vw,8vh) min(27vw,27vh) min(5vw,5vh);display:flex;align-items:center;justify-content:center;pointer-events:none;}.unfolded.text p{color:oklch(30% 0.35 0);text-align:center;font-size:min(4vw,4vh);line-height:1.5;width:100%;max-height:100%;overflow-y:auto;}.rotate{animation:rotate 5s ease infinite;}@keyframes rotate{0%,9%{transform:rotate(0deg);}11%,19%{transform:rotate(36deg);}21%,29%{transform:rotate(72deg);}31%,39%{transform:rotate(108deg);}41%,49%{transform:rotate(144deg);}51%,59%{transform:rotate(180deg);}61%,69%{transform:rotate(216deg);}71%,79%{transform:rotate(252deg);}81%,89%{transform:rotate(288deg);}91%,99%{transform:rotate(324deg);}100%{transform:rotate(342deg);}}</style></head><body><img class=\"crumpled rotate\" src=\"images/crumbled-up.png\" alt=\"Crumpled paper\"><div class=\"paper-wrapper\"><img class=\"unfolded\" src=\"images/unfolded.png\" alt=\"Unfolded paper\"><div class=\"unfolded text\"><p id=\"note-content\">Dieser Text ist noch verschlüsselt...</p></div></div><footer>&copy; 2025 · Mit ❤️ von Bruno für Samma</footer><script>const crumpled=document.querySelector(\".crumpled\");const paperWrapper=document.querySelector(\".paper-wrapper\");const noteText=document.getElementById(\"note-content\");const encryptedData=__DATA__;const emojiMap=__MAP__;function base64ToBytes(b64){const bin=window.atob(b64);const len=bin.length;const bytes=new Uint8Array(len);for(let i=0;i<len;i++){bytes[i]=bin.charCodeAt(i);}return bytes;}async function decryptMessage(pw){try{const enc=new TextEncoder();const keyMat=await window.crypto.subtle.importKey(\"raw\",enc.encode(pw),\"PBKDF2\",false,[\"deriveKey\"]);const salt=base64ToBytes(encryptedData.salt);const iv=base64ToBytes(encryptedData.iv);const data=base64ToBytes(encryptedData.data);const key=await window.crypto.subtle.deriveKey({\"name\":\"PBKDF2\",salt:salt,\"iterations\":100000,\"hash\":\"SHA-256\"},keyMat,{\"name\":\"AES-GCM\",\"length\":256},false,[\"decrypt\"]);const decBuf=await window.crypto.subtle.decrypt({\"name\":\"AES-GCM\",\"iv\":iv},key,data);return new TextDecoder().decode(decBuf);}catch(e){console.error(e);return null;}}document.addEventListener(\"DOMContentLoaded\",async()=>{const pw=prompt(\"Einmal bitte das geheime Wort, das kleiner als 3 ist 😝\");if(pw){let msg=await decryptMessage(pw);if(msg){Object.keys(emojiMap).forEach(key=>{const imgTag=`<img src=\"${emojiMap[key]}\" alt=\"${key}\" style=\"height:1em;width:auto;vertical-align:middle;margin:0 2px;display:inline;\">`;msg=msg.split(key).join(imgTag);});noteText.innerHTML=msg;}else{noteText.textContent=\"Falsches Passwort 😢 (Seite neu laden)\";noteText.style.color=\"oklch(30% 0.35 0);\";}}});crumpled.addEventListener(\"click\",()=>{crumpled.style.display=\"none\";paperWrapper.style.display=\"block\";});</script></body></html>"
+
+	final_html = html_template.replace("__DATA__", encrypted_json).replace("__MAP__", mapping_json)
+
+	filename = f"snb-{now.day}-{now.month}-{now.year}.html"
+	with open(filename, "w+", encoding="utf-8") as file:
+		file.write(final_html)
+	
+	print(f"Datei '{filename}' erfolgreich erstellt.")
 
 if __name__ == "__main__":
 	main()
