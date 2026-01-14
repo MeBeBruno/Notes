@@ -23,6 +23,7 @@ def main():
 	PASSWORT = "samma"
 	EMOJI_MAPPING = {
 		"😝": "images/emojis/sammiley.png",
+		":alien:": "images/emojis/alien.png",
 	}
 
 	print(f"Verschlüssle Nachricht für Passwort: '{PASSWORT}'")
