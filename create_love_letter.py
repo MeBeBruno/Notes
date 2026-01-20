@@ -24,6 +24,8 @@ def main():
 	EMOJI_MAPPING = {
 		"😝": "images/emojis/sammiley.png",
 		":alien:": "images/emojis/alien.png",
+		":pringles:": "images/emojis/pringles-cat.png",
+		":teleport_to_me:": "images/emojis/teleport-to-me-cat.png",
 	}
 
 	print(f"Verschlüssle Nachricht für Passwort: '{PASSWORT}'")
