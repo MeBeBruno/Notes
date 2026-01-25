@@ -23,6 +23,7 @@ def main():
 	PASSWORT = "samma"
 	EMOJI_MAPPING = {
 		"😝": "images/emojis/sammiley.png",
+		":sammiley:": "images/emojis/sammiley.png",
 		":alien:": "images/emojis/alien.png",
 		":pringles:": "images/emojis/pringles-cat.png",
 		":teleport_to_me:": "images/emojis/teleport-to-me-cat.png",
